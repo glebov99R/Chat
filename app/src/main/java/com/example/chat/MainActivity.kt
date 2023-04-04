@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
     lateinit var auth: FirebaseAuth
+    lateinit var adapter: UserAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,14 +39,21 @@ class MainActivity : AppCompatActivity() {
          * Слушатель нажатий на кнопку "Send"
          */
         binding.bSend.setOnClickListener {
-            myRef.setValue(binding.thisMessage.text.toString()) // При нажатии на кнопку отправляет текст введенный в textField(thisMessage) по пути myRef
+            myRef.child(myRef.push().key ?: "emptyPath").setValue(User(auth.currentUser?.displayName,binding.thisMessage.text.toString())) // При нажатии на кнопку отправляет текст введенный в textField(thisMessage) по пути myRef
         }
 
         /**
          * Функция прослушивает изменения на пути myRef(message)
          */
         onChangeRouteListener(myRef)
+        initRcView()
 
+    }
+
+    private fun initRcView() = with(binding){
+        adapter = UserAdapter()
+        rcView.layoutManager = LinearLayoutManager(this@MainActivity)
+        rcView.adapter = adapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -72,10 +81,14 @@ class MainActivity : AppCompatActivity() {
              * @param snapshot - Это и есть те данные которые мы прослушиваем
              */
             override fun onDataChange(snapshot: DataSnapshot) {
-                binding.apply {
-                    rcView.append("\n") // перехолд курсора на новую строчку
-                    rcView.append("Artem: ${snapshot.value.toString()}") // добавление нового текста в textView
-                }
+                val list = ArrayList<User>()
+                 for (s in snapshot.children){
+                     val user = s.getValue(User::class.java)
+                     if (user != null)list.add(user)
+
+                 }
+
+                adapter.submitList(list)
             }
 
 

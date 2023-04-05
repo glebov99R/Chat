@@ -10,10 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
@@ -68,12 +65,32 @@ class MainActivity : AppCompatActivity() {
          *
          * В данном случае метод setValue записывает в базу данных Firebase Realtime Database объект User, содержащий имя пользователя и текст сообщения.
          * Этот объект будет записан в узел, имя которого задано методом child объекта myRef. Если указанный узел не существует, то он будет создан автоматически.
+         *
+         * !!! Этот код отвечает за отправку сообщения в базу данных Firebase Realtime Database. При нажатии на кнопку "bSend", код генерирует уникальный идентификатор сообщения с помощью метода push().key
+         * и сохраняет новый экземпляр класса User в базу данных. Затем текстовое поле thisMessage очищается для ввода следующего сообщения.
          */
         binding.bSend.setOnClickListener {
-            myRef.child(myRef.push().key ?: "emptyPath").setValue(User(name = auth.currentUser?.displayName, message = binding.thisMessage.text.toString()))
-//            Log.d("MyLogAuth","id${auth.tenantId}")
-//            , id = auth.tenantId
+
+            val messageId = myRef.push().key ?: "emptyPath"
+
+            myRef.child(messageId).setValue(
+                User(
+                    name = auth.currentUser?.displayName,
+                    message = binding.thisMessage.text.toString(),
+                    messageId = messageId
+                )
+            )
+            binding.thisMessage.setText("")
         }
+
+//        adapter.setOnItemLongClickListener(object : UserAdapter.OnItemLongClickListener {
+//            override fun onItemLongClick(user: User) {
+//                // Получаем идентификатор сообщения
+//                val messageId = user.messageId
+//                // Удаляем сообщение из базы данных по его идентификатору
+//                myRef.child(messageId!!).removeValue()
+//            }
+//        })
 
 
         /**

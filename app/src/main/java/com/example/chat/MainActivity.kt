@@ -2,7 +2,6 @@ package com.example.chat
 
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -15,7 +14,7 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), UserAdapter.Listener {
 
     /**
      * lateinit (отложенная инициализация) означает, что переменная binding не будет инициализирована в момент ее объявления,
@@ -93,20 +92,24 @@ class MainActivity : AppCompatActivity() {
 //        })
 
 
+
+
         /**
          * Функция прослушивает изменения на пути myRef(message)
          */
         onChangeRouteListener(myRef)
 
-        initRcView() // Инизиализируем метод initRcView
+        initRcView(this) // Инизиализируем метод initRcView
 
     }
+
+
 
     /**
      * Функция которая инициализирует RecyclerView и устанавливает адаптер для него.
      */
-    private fun initRcView() = with(binding){
-        adapter = UserAdapter() // Инизиализируем адаптер
+    private fun initRcView(listener : UserAdapter.Listener) = with(binding){
+        adapter = UserAdapter(listener) // Инизиализируем адаптер
 
 
         /**
@@ -218,4 +221,13 @@ class MainActivity : AppCompatActivity() {
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
     }
+
+
+    override fun onLongClick(user: User) {
+        val messageId = user.messageId
+        val database = Firebase.database
+        val myRef = database.getReference("message")
+        myRef.child(messageId!!).removeValue()
+    }
+
 }

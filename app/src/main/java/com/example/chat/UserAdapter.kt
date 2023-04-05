@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.databinding.UserListItemBinding
 
 /**
@@ -17,7 +18,9 @@ import com.example.chat.databinding.UserListItemBinding
  * ItemComparator() передается в качестве параметра в конструктор ListAdapter и используется для сравнения объектов в списке данных.
  */
 
-class UserAdapter: ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
+class UserAdapter(
+    private val listener: Listener
+): ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
 
     /**
      * Этот код относится к созданию ViewHolder для RecyclerView. ViewHolder используется для хранения и управления отображением элемента списка, который будет отображаться на экране.
@@ -39,9 +42,14 @@ class UserAdapter: ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
          * В данном случае, эта функция заполняет имя пользователя (name) и сообщение (message) в соответствующие TextView элементы в макете UserListItemBinding.
          * Это происходит в блоке with(binding), который обеспечивает доступ к View элементам из макета через свойства binding.
          */
-        fun bind(user: User) = with(binding){
+        fun bind(user: User, listener: Listener) = with(binding){
             message.text = user.message
             userName.text = user.name
+
+            itemView.setOnLongClickListener {
+                listener.onLongClick(user)
+                true
+            }
         }
         /**
          * companion object это объект, который может содержать методы и свойства,
@@ -113,7 +121,11 @@ class UserAdapter: ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
      *  а затем holder.bind() используется для отображения этих данных в представлении holder.
      */
         override fun onBindViewHolder(holder: ItemHolder, position: Int) {
-            holder.bind(getItem(position))
+            holder.bind(getItem(position), listener)
+    }
+
+    interface Listener{
+        fun onLongClick(user: User)
     }
 }
 

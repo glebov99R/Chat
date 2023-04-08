@@ -8,5 +8,6 @@ package com.example.chat
 data class User(
     val name: String? = null,
     val message: String? = null,
-    val messageId: String? = null
+    val messageId: String? = null,
+    var photoUrl: String? = ""
 )

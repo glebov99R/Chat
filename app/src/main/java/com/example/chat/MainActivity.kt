@@ -1,116 +1,143 @@
 package com.example.chat
 
+import android.app.Activity
+import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
+import com.example.chat.util.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
 
-class MainActivity : AppCompatActivity(), UserAdapter.Listener {
+class MainActivity : AppCompatActivity() {
 
-    /**
-     * lateinit (отложенная инициализация) означает, что переменная binding не будет инициализирована в момент ее объявления,
-     * а будет проинициализирована позднее в коде, до того момента, когда будет использоваться.
-     */
     lateinit var binding: ActivityMainBinding
-
-    /**
-     * lateinit (отложенная инициализация) означает, что переменная auth не будет инициализирована в момент ее объявления,
-     * а будет проинициализирована позднее в коде, до того момента, когда будет использоваться.
-     */
     lateinit var auth: FirebaseAuth
-
-
-    /**
-     * lateinit (отложенная инициализация) означает, что переменная adapter не будет инициализирована в момент ее объявления,
-     * а будет проинициализирована позднее в коде, до того момента, когда будет использоваться.
-     */
     lateinit var adapter: UserAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState) // Это метод жизненного цикла активности, который вызывается при ее создании.
-        /**
-         * binding = ActivityMainBinding.inflate(layoutInflater) создает экземпляр ActivityMainBinding,
-         * который содержит ссылки на все виды, определенные в макете activity_main.xml, и связывает их с соответствующими переменными в коде.
-         */
+        super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        setContentView(binding.root) // Устанавливает корневое представление макета activity_main.xml в качестве основного содержимого этой активности.
+        AUTH = Firebase.auth // Firebase.auth возвращает объект класса FirebaseAuth, который предоставляет API для аутентификации пользователей в приложении Firebase.
 
-        auth = Firebase.auth // Firebase.auth возвращает объект класса FirebaseAuth, который предоставляет API для аутентификации пользователей в приложении Firebase.
+        DATABASE = Firebase.database // Создания инстаннца
+
+        MY_REF = DATABASE.getReference("message") // Создание пути для отправки данных в БД
+
+        REF_STORAGE_ROOT = FirebaseStorage.getInstance().reference.child("images") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
+
+        APP_ACTIVITY = this // Ссылка на наше Activity
 
         setUpActionBar()
 
-        val database = Firebase.database // Создания инстаннца
+        binding.thisMessage.addTextChangedListener {
 
-        val myRef = database.getReference("message") // Создание пути для отправки данных в БД
+            if (binding.thisMessage.text.isEmpty()){
+                binding.bSend.visibility = View.GONE
+                binding.bAttach.visibility = View.VISIBLE
+            } else {
+                binding.bSend.visibility = View.VISIBLE
+                binding.bAttach.visibility = View.GONE
+            }
 
-        /**
-         * Этот код устанавливает обработчик нажатия на кнопку bSend и выполняет запись в базу данных Firebase Realtime Database.
-         * При нажатии на кнопку bSend вызывается лямбда-выражение, которое выполняет следующие действия:
-         *
-         * 1) Создает новый узел в базе данных Firebase Realtime Database с помощью метода child объекта myRef,
-         * указывая в качестве имени ключ, полученный с помощью метода push() (если ключ не получен, то будет использоваться строка "emptyPath").
-         *
-         * 2) Устанавливает значение узла в виде объекта User, содержащего имя пользователя и текст сообщения, полученный из EditText с идентификатором thisMessage объекта binding.
-         *
-         * В данном случае метод setValue записывает в базу данных Firebase Realtime Database объект User, содержащий имя пользователя и текст сообщения.
-         * Этот объект будет записан в узел, имя которого задано методом child объекта myRef. Если указанный узел не существует, то он будет создан автоматически.
-         *
-         * !!! Этот код отвечает за отправку сообщения в базу данных Firebase Realtime Database. При нажатии на кнопку "bSend", код генерирует уникальный идентификатор сообщения с помощью метода push().key
-         * и сохраняет новый экземпляр класса User в базу данных. Затем текстовое поле thisMessage очищается для ввода следующего сообщения.
-         */
-        binding.bSend.setOnClickListener {
-
-            val messageId = myRef.push().key ?: "emptyPath"
-
-            myRef.child(messageId).setValue(
-                User(
-                    name = auth.currentUser?.displayName,
-                    message = binding.thisMessage.text.toString(),
-                    messageId = messageId
-                )
-            )
-            binding.thisMessage.setText("")
         }
 
-//        adapter.setOnItemLongClickListener(object : UserAdapter.OnItemLongClickListener {
-//            override fun onItemLongClick(user: User) {
-//                // Получаем идентификатор сообщения
-//                val messageId = user.messageId
-//                // Удаляем сообщение из базы данных по его идентификатору
-//                myRef.child(messageId!!).removeValue()
-//            }
-//        })
+        binding.bAttach.setOnClickListener {
+//            attachFile()
+            chooseImage()
+        }
 
+        binding.bSend.setOnClickListener {
 
+            val messageId = MY_REF.push().key ?: "emptyPath"
 
+            MY_REF.child(messageId).setValue(
+                    User(
+                        name = AUTH.currentUser?.displayName,
+                        message = binding.thisMessage.text.toString(),
+                        messageId = messageId
+                    )
+                )
+                binding.thisMessage.setText("")
+        }
 
         /**
          * Функция прослушивает изменения на пути myRef(message)
          */
-        onChangeRouteListener(myRef)
+        onChangeRouteListener(MY_REF)
 
-        initRcView(this) // Инизиализируем метод initRcView
+        initRcView() // Инизиализируем метод initRcView
+
 
     }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            // Обработка выбранного изображения
+            val selectedImageUri = result.data?.data
+            // Вызов функции загрузки изображения в Firebase Storage
+            uploadImageToFirebaseStorage(selectedImageUri)
+        }
+    }
+
+    private fun chooseImage() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        pickImageLauncher.launch(Intent.createChooser(intent, "Select Image"))
+    }
+
+    private fun uploadImageToFirebaseStorage(imageUri: Uri?) {
+        // Проверяем, что URI изображения не является null
+        imageUri?.let { uri ->
+            // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
+            val storageReference = FirebaseStorage.getInstance().reference.child("images")
+
+            // Создаем уникальное имя файла на основе текущего времени
+            val fileName = "image_${System.currentTimeMillis()}.jpg"
+
+            // Создаем ссылку на файл в Firebase Storage
+            val imageRef = storageReference.child(fileName)
+
+            // Загружаем изображение в Firebase Storage
+            imageRef.putFile(uri)
+                .addOnSuccessListener { taskSnapshot ->
+                    // Получаем ссылку на загруженное изображение
+                    taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+                        val imageUrl = uri.toString()
+                        // Ваш код обработки ссылки на изображение
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    // Обработка ошибки загрузки изображения
+                    Log.e("23", "Error uploading image to Firebase Storage: ${exception.message}")
+                }
+        }
+    }
 
     /**
      * Функция которая инициализирует RecyclerView и устанавливает адаптер для него.
      */
-    private fun initRcView(listener : UserAdapter.Listener) = with(binding){
-        adapter = UserAdapter(listener) // Инизиализируем адаптер
-
+    private fun initRcView() = with(binding){
+        adapter = UserAdapter() // Инизиализируем адаптер
 
         /**
          * мы устанавливаем для rcView (RecyclerView) менеджер компоновки LinearLayoutManager,
@@ -143,7 +170,7 @@ class MainActivity : AppCompatActivity(), UserAdapter.Listener {
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.sign_out){
-            auth.signOut()
+            AUTH.signOut()
             finish()
         }
         return super.onOptionsItemSelected(item)
@@ -198,7 +225,7 @@ class MainActivity : AppCompatActivity(), UserAdapter.Listener {
              * Затем метод get() вызывается для получения объекта Bitmap, который представляет загруженное изображение.
              * Наконец, объект Bitmap сохраняется в переменной bMap для использования в дальнейшем, например, для создания объекта BitmapDrawable для установки значка кнопки "Домой" ActionBar
              */
-            val bMap = Picasso.get().load(auth.currentUser?.photoUrl).get()
+            val bMap = Picasso.get().load(AUTH.currentUser?.photoUrl).get()
 
             /**
              * Код создает новый объект BitmapDrawable, используя ресурсы приложения и объект bMap,
@@ -216,18 +243,10 @@ class MainActivity : AppCompatActivity(), UserAdapter.Listener {
             runOnUiThread {
                 ab?.setDisplayHomeAsUpEnabled(true) // Метод setDisplayHomeAsUpEnabled для отображения кнопки "Домой" ActionBar
                 ab?.setHomeAsUpIndicator(dIcon) // Метод setHomeAsUpIndicator для установки значка кнопки "Домой", и метод title для установки заголовка ActionBar.
-                ab?.title = auth.currentUser?.displayName // Устанавливаем в заголово ActionBar имя текущего пользователя прошедшего Авторизацию
+                ab?.title = AUTH.currentUser?.displayName // Устанавливаем в заголово ActionBar имя текущего пользователя прошедшего Авторизацию
             }
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
-    }
-
-
-    override fun onLongClick(user: User) {
-        val messageId = user.messageId
-        val database = Firebase.database
-        val myRef = database.getReference("message")
-        myRef.child(messageId!!).removeValue()
     }
 
 }

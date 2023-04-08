@@ -5,8 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.databinding.UserListItemBinding
+import com.example.chat.util.MY_REF
+
 
 /**
  * UserAdapter это класс адаптера RecyclerView, который отвечает за заполнение элементов списка данными.
@@ -18,10 +19,7 @@ import com.example.chat.databinding.UserListItemBinding
  * ItemComparator() передается в качестве параметра в конструктор ListAdapter и используется для сравнения объектов в списке данных.
  */
 
-class UserAdapter(
-    private val listener: Listener
-): ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
-
+class UserAdapter: ListAdapter<User, UserAdapter.ItemHolder>(ItemComparator()) {
     /**
      * Этот код относится к созданию ViewHolder для RecyclerView. ViewHolder используется для хранения и управления отображением элемента списка, который будет отображаться на экране.
      *
@@ -42,12 +40,13 @@ class UserAdapter(
          * В данном случае, эта функция заполняет имя пользователя (name) и сообщение (message) в соответствующие TextView элементы в макете UserListItemBinding.
          * Это происходит в блоке with(binding), который обеспечивает доступ к View элементам из макета через свойства binding.
          */
-        fun bind(user: User, listener: Listener) = with(binding){
+        fun bind(user: User) = with(binding){
             message.text = user.message
             userName.text = user.name
 
             itemView.setOnLongClickListener {
-                listener.onLongClick(user)
+                val messageId = user.messageId
+                MY_REF.child(messageId!!).removeValue()
                 true
             }
         }
@@ -71,6 +70,8 @@ class UserAdapter(
                     .inflate(LayoutInflater.from(parent.context), parent, false))
             }
         }
+
+
     }
 
     /**
@@ -121,12 +122,15 @@ class UserAdapter(
      *  а затем holder.bind() используется для отображения этих данных в представлении holder.
      */
         override fun onBindViewHolder(holder: ItemHolder, position: Int) {
-            holder.bind(getItem(position), listener)
+            holder.bind(getItem(position))
     }
 
-    interface Listener{
-        fun onLongClick(user: User)
-    }
+
+//    interface Listener{
+//        fun onLongClick(user: User)
+//    }
+
+
 }
 
 

@@ -52,4 +52,15 @@
         app:layout_constraintEnd_toEndOf="@+id/thisMessage"
         app:srcCompat="@drawable/ic_button_attach" />
 
+    <ImageButton
+        android:id="@+id/bACamera"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="48dp"
+        android:layout_height="46dp"
+        android:layout_marginBottom="3dp"
+        android:contentDescription="3"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/bAttach"
+        app:srcCompat="@drawable/ic_baseline_photo_camera" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

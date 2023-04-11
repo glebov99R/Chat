@@ -138,45 +138,28 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
             VIEW_TYPE_MY_TEXT ->  {
                 val itemMyMessageHolder = holder as ItemMyMessageHolder
                 itemMyMessageHolder.bindMyMessage(user)
-//                Log.d("wqeeqwq","VIEW_TYPE_MY_TEXT")
             }
             VIEW_TYPE_MY_IMAGE -> {
                 val itemMyImageHolder = holder as ItemMyImageHolder
                 itemMyImageHolder.bindMyImage(user)
-//                Log.d("wqeeqwq","VIEW_TYPE_MY_IMAGE")
             }
             VIEW_TYPE_OTHER_TEXT -> {
                 val itemOtherMessageHolder = holder as ItemOtherMessageHolder
                 itemOtherMessageHolder.bindOtherMessage(user)
-//                Log.d("wqeeqwq","VIEW_TYPE_OTHER_TEXT")
             }
             VIEW_TYPE_OTHER_IMAGE -> {
                 val itemOtherImageHolder = holder as ItemOtherImageHolder
                 itemOtherImageHolder.bindOtherImage(user)
-//                Log.d("wqeeqwq","VIEW_TYPE_OTHER_IMAGE")
             }
         }
     }
 
     override fun getItemViewType(position: Int): Int {
         val user = getItem(position)
-
-         return when ( user.userId == CURRENT_UID){
-             true -> {
-                 if (user.photoUrl != null ){
-                     VIEW_TYPE_MY_IMAGE
-                 } else {
-                     VIEW_TYPE_MY_TEXT
-                 }
-             }
-             false -> {
-                 if (user.photoUrl != null ){
-                     VIEW_TYPE_OTHER_IMAGE
-                 } else {
-                     VIEW_TYPE_OTHER_TEXT
-                 }
-             }
-         }
+        return when (user.userId == CURRENT_UID) {
+            true -> if (user.photoUrl != null) VIEW_TYPE_MY_IMAGE else VIEW_TYPE_MY_TEXT
+            false -> if (user.photoUrl != null) VIEW_TYPE_OTHER_IMAGE else VIEW_TYPE_OTHER_TEXT
+        }
     }
 
 }

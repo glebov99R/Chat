@@ -5,12 +5,15 @@ import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
@@ -20,10 +23,13 @@ import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.ktx.storage
 import com.squareup.picasso.Picasso
 import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+
         setContentView(binding.root)
 
         AUTH = Firebase.auth // Firebase.auth возвращает объект класса FirebaseAuth, который предоставляет API для аутентификации пользователей в приложении Firebase.
@@ -45,8 +52,7 @@ class MainActivity : AppCompatActivity() {
 
         APP_ACTIVITY = this // Ссылка на наше Activity
 
-        CURRENT_UID = AUTH.currentUser?.uid.toString()
-
+        CURRENT_UID = AUTH.currentUser?.uid.toString() // Уникальный идентификатор пользователя
 
 
         setUpActionBar()
@@ -63,10 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        binding.bAttach.setOnClickListener {
-//            attachFile()
-            chooseImage()
-        }
+        binding.bAttach.setOnClickListener { chooseImage() }
 
         binding.bSend.setOnClickListener {
 
@@ -88,30 +91,84 @@ class MainActivity : AppCompatActivity() {
          */
         onChangeRouteListener(MY_REF)
 
-
         initRcView() // Инизиализируем метод initRcView
-
-
+        binding.bACamera.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
     }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private fun onChangeRouteImageListener(dtStoreRef: StorageReference){
+//    private val takePictureLauncherOld = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+//        if (result.resultCode == Activity.RESULT_OK) {
+//            // Получаем изображение из Intent и загружаем его в Firebase Storage
+//            val imageUri = result.data?.extras?.get(MediaStore.EXTRA_OUTPUT) as? Uri
+//            Log.d("imageg121","${imageUri}")
+//            uploadImageToFirebaseStorage(imageUri)
+//        }
+//    }
+//
+//    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+//        if (result.resultCode == Activity.RESULT_OK) {
+//            val imageUri = Uri.parse(currentPhotoPath)
+//            // Для получения постоянного доступа к Uri нужно выполнить takePersistableUriPermission
+//            contentResolver.takePersistableUriPermission(imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//            Log.d("imageg121","${imageUri}")
+//            uploadImageToFirebaseStorage(imageUri)
+//        }
+//    }
 
-        val storage = FirebaseStorage.getInstance()
-        val rootRef = storage.reference
-        val islandRef = rootRef.child("images/island.jpg")
 
+    private lateinit var currentPhotoPath: String
 
-
-        val localFile = File.createTempFile("images", "jpg")
-
-        rootRef.getFile(localFile).addOnSuccessListener { taskSnapshot ->
-
-        }.addOnFailureListener { exception ->
-
+    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val file = File(currentPhotoPath)
+            val imageUri = Uri.fromFile(file)
+            uploadImageToFirebaseStorage(imageUri)
         }
     }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Создаём фаил изображения
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_",
+            ".jpg",
+            storageDir
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                // Error occurred while creating the File
+                null
+            }
+            // Continue only if the File was successfully created
+            photoFile?.also {
+                val photoURI: Uri = FileProvider.getUriForFile(
+                    this,
+                    "${applicationContext.packageName}.provider",
+                    it
+                )
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+//                takePictureLauncher.launch(takePictureIntent)
+//                takePictureLauncherOld.launch(takePictureIntent)
+                takePicture.launch(takePictureIntent)
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
@@ -123,7 +180,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun chooseImage() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         pickImageLauncher.launch(Intent.createChooser(intent, "Select Image"))
     }
@@ -280,6 +337,9 @@ class MainActivity : AppCompatActivity() {
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
     }
+
+
+
 
 
 }

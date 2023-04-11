@@ -45,6 +45,8 @@ class MainActivity : AppCompatActivity() {
 
         APP_ACTIVITY = this // Ссылка на наше Activity
 
+        CURRENT_UID = AUTH.currentUser?.uid.toString()
+
 
 
         setUpActionBar()
@@ -74,7 +76,8 @@ class MainActivity : AppCompatActivity() {
                     User(
                         name = AUTH.currentUser?.displayName,
                         message = binding.thisMessage.text.toString(),
-                        messageId = messageId
+                        messageId = messageId,
+                        userId = CURRENT_UID
                     )
                 )
                 binding.thisMessage.setText("")
@@ -150,7 +153,8 @@ class MainActivity : AppCompatActivity() {
                             User(
                                 name = AUTH.currentUser?.displayName,
                                 messageId = image,
-                                photoUrl = imageUrl
+                                photoUrl = imageUrl,
+                                userId = CURRENT_UID
                             )
                         )
                     }

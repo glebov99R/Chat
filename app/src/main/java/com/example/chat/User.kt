@@ -9,5 +9,6 @@ data class User(
     val name: String? = null,
     val message: String? = null,
     val messageId: String? = null,
-    var photoUrl: String? = null
+    var photoUrl: String? = null,
+    val userId:  String? = null,
 )

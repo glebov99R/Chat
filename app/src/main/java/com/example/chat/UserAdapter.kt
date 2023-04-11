@@ -1,5 +1,6 @@
 package com.example.chat
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,10 +9,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.chat.databinding.ActivityMainBinding.bind
-import com.example.chat.databinding.UserListItemBinding
+import com.example.chat.util.CURRENT_UID
 import com.example.chat.util.MY_REF
-import com.example.chat.util.REF_STORAGE_ROOT
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.squareup.picasso.Picasso
@@ -30,15 +29,19 @@ import com.squareup.picasso.Picasso
 class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) {
 
     companion object {
-        const val VIEW_TYPE_TEXT = 1
-        const val VIEW_TYPE_IMAGE = 2
+        const val VIEW_TYPE_MY_TEXT = 1
+        const val VIEW_TYPE_MY_IMAGE = 2
+
+        const val VIEW_TYPE_OTHER_TEXT = 3
+        const val VIEW_TYPE_OTHER_IMAGE = 4
     }
 
-    class  ItemHolder(item: View): RecyclerView.ViewHolder(item){
-        private val messageTextView: TextView = itemView.findViewById(R.id.message)
-        private val userNameTextView: TextView = itemView.findViewById(R.id.userName)
+    class  ItemMyMessageHolder(item: View): RecyclerView.ViewHolder(item){
 
-        fun bindMessage(user: User) {
+        private val messageTextView: TextView = itemView.findViewById(R.id.myMessage)
+        private val userNameTextView: TextView = itemView.findViewById(R.id.myName)
+
+        fun bindMyMessage(user: User) {
             messageTextView.text = user.message
             userNameTextView.text = user.name
             itemView.setOnLongClickListener {
@@ -47,31 +50,55 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
                 true
             }
         }
-
     }
 
-    class ImageHolder(item: View): RecyclerView.ViewHolder(item){
+    class ItemMyImageHolder(item: View): RecyclerView.ViewHolder(item){
 
-        private val imageView: ImageView = itemView.findViewById(R.id.imageMessage)
+        private val imageView: ImageView = itemView.findViewById(R.id.imageMyMessage)
 
-        fun bindImage(user: User, position: Int) {
-            Picasso
-               .get()
-               .load(user.photoUrl)
-               .into(imageView)
-
+        fun bindMyImage(user: User) {
+            Picasso.get().load(user.photoUrl).into(imageView)
             itemView.setOnLongClickListener {
                 val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
                 sad.delete().addOnSuccessListener {
                     MY_REF.child(user.messageId!!).removeValue()
                 }
                     true
-
             }
         }
     }
 
+    class  ItemOtherMessageHolder(item: View): RecyclerView.ViewHolder(item){
 
+        private val messageTextView: TextView = itemView.findViewById(R.id.otherMessage)
+        private val userNameTextView: TextView = itemView.findViewById(R.id.otherName)
+
+        fun bindOtherMessage(user: User) {
+            messageTextView.text = user.message
+            userNameTextView.text = user.name
+//            itemView.setOnLongClickListener {
+//                val messageId = user.messageId
+//                MY_REF.child(messageId!!).removeValue()
+//                true
+//            }
+        }
+    }
+
+    class ItemOtherImageHolder(item: View): RecyclerView.ViewHolder(item){
+
+        private val imageView: ImageView = itemView.findViewById(R.id.imageOtherMessage)
+
+        fun bindOtherImage(user: User) {
+            Picasso.get().load(user.photoUrl).into(imageView)
+//            itemView.setOnLongClickListener {
+//                val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
+//                sad.delete().addOnSuccessListener {
+//                    MY_REF.child(user.messageId!!).removeValue()
+//                }
+//                true
+//            }
+        }
+    }
 
     class ItemComparator : DiffUtil.ItemCallback<User>(){
         override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
@@ -84,13 +111,21 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType){
-            VIEW_TYPE_TEXT -> {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.user_list_item, parent, false)
-                ItemHolder(view)
+            VIEW_TYPE_MY_TEXT -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_message_item, parent, false)
+                ItemMyMessageHolder(view)
             }
-            VIEW_TYPE_IMAGE -> {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.user_list_image_item, parent, false)
-                ImageHolder(view)
+            VIEW_TYPE_MY_IMAGE -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_image_item, parent, false)
+                ItemMyImageHolder(view)
+            }
+            VIEW_TYPE_OTHER_TEXT -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_other_message_item, parent, false)
+                ItemOtherMessageHolder(view)
+            }
+            VIEW_TYPE_OTHER_IMAGE -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_other_image_item, parent, false)
+                ItemOtherImageHolder(view)
             }
             else -> throw IllegalArgumentException("Invalid view type")
 
@@ -100,23 +135,47 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val user = getItem(position)
         when (holder.itemViewType) {
-             VIEW_TYPE_TEXT ->  {
-                val messageWithHolder = holder as ItemHolder
-                messageWithHolder.bindMessage(user)
+            VIEW_TYPE_MY_TEXT ->  {
+                val itemMyMessageHolder = holder as ItemMyMessageHolder
+                itemMyMessageHolder.bindMyMessage(user)
+//                Log.d("wqeeqwq","VIEW_TYPE_MY_TEXT")
             }
-             VIEW_TYPE_IMAGE -> {
-                val imageWithHolder = holder as ImageHolder
-                imageWithHolder.bindImage(user,position)
+            VIEW_TYPE_MY_IMAGE -> {
+                val itemMyImageHolder = holder as ItemMyImageHolder
+                itemMyImageHolder.bindMyImage(user)
+//                Log.d("wqeeqwq","VIEW_TYPE_MY_IMAGE")
+            }
+            VIEW_TYPE_OTHER_TEXT -> {
+                val itemOtherMessageHolder = holder as ItemOtherMessageHolder
+                itemOtherMessageHolder.bindOtherMessage(user)
+//                Log.d("wqeeqwq","VIEW_TYPE_OTHER_TEXT")
+            }
+            VIEW_TYPE_OTHER_IMAGE -> {
+                val itemOtherImageHolder = holder as ItemOtherImageHolder
+                itemOtherImageHolder.bindOtherImage(user)
+//                Log.d("wqeeqwq","VIEW_TYPE_OTHER_IMAGE")
             }
         }
     }
 
     override fun getItemViewType(position: Int): Int {
         val user = getItem(position)
-         return if (user.photoUrl != null) {
-             VIEW_TYPE_IMAGE
-         } else {
-             VIEW_TYPE_TEXT
+
+         return when ( user.userId == CURRENT_UID){
+             true -> {
+                 if (user.photoUrl != null ){
+                     VIEW_TYPE_MY_IMAGE
+                 } else {
+                     VIEW_TYPE_MY_TEXT
+                 }
+             }
+             false -> {
+                 if (user.photoUrl != null ){
+                     VIEW_TYPE_OTHER_IMAGE
+                 } else {
+                     VIEW_TYPE_OTHER_TEXT
+                 }
+             }
          }
     }
 

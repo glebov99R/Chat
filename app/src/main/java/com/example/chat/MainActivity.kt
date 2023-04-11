@@ -71,7 +71,11 @@ class MainActivity : AppCompatActivity() {
 
         binding.bAttach.setOnClickListener { chooseImage() }
 
+
+
         binding.bSend.setOnClickListener {
+
+            val currentTime: String = Calendar.getInstance().time.toString()
 
             val messageId = MY_REF.push().key ?: "emptyPath"
 
@@ -84,6 +88,8 @@ class MainActivity : AppCompatActivity() {
                     )
                 )
                 binding.thisMessage.setText("")
+
+            Log.d("timesMessag", currentTime)
         }
 
         /**

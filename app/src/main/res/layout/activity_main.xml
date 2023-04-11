@@ -57,10 +57,11 @@
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_width="48dp"
         android:layout_height="46dp"
+        android:layout_marginEnd="50dp"
         android:layout_marginBottom="3dp"
         android:contentDescription="3"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/bAttach"
+        app:layout_constraintEnd_toEndOf="@+id/thisMessage"
         app:srcCompat="@drawable/ic_baseline_photo_camera" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

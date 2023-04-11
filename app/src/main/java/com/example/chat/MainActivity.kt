@@ -15,18 +15,19 @@ import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.util.*
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.ktx.storage
 import com.squareup.picasso.Picasso
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    lateinit var auth: FirebaseAuth
     lateinit var adapter: UserAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,11 +39,13 @@ class MainActivity : AppCompatActivity() {
 
         DATABASE = Firebase.database // Создания инстаннца
 
-        MY_REF = DATABASE.getReference("message") // Создание пути для отправки данных в БД
+        MY_REF = DATABASE.getReference(NODE_MESSAGE) // Создание пути для отправки данных в БД
 
         REF_STORAGE_ROOT = FirebaseStorage.getInstance().reference.child("images") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
 
         APP_ACTIVITY = this // Ссылка на наше Activity
+
+
 
         setUpActionBar()
 
@@ -82,6 +85,7 @@ class MainActivity : AppCompatActivity() {
          */
         onChangeRouteListener(MY_REF)
 
+
         initRcView() // Инизиализируем метод initRcView
 
 
@@ -89,6 +93,22 @@ class MainActivity : AppCompatActivity() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private fun onChangeRouteImageListener(dtStoreRef: StorageReference){
+
+        val storage = FirebaseStorage.getInstance()
+        val rootRef = storage.reference
+        val islandRef = rootRef.child("images/island.jpg")
+
+
+
+        val localFile = File.createTempFile("images", "jpg")
+
+        rootRef.getFile(localFile).addOnSuccessListener { taskSnapshot ->
+
+        }.addOnFailureListener { exception ->
+
+        }
+    }
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
@@ -122,8 +142,17 @@ class MainActivity : AppCompatActivity() {
                 .addOnSuccessListener { taskSnapshot ->
                     // Получаем ссылку на загруженное изображение
                     taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
-                        val imageUrl = uri.toString()
-                        // Ваш код обработки ссылки на изображение
+                        val imageUrl = uri.toString()  // Ваш код обработки ссылки на изображение
+
+                        val image = MY_REF.push().key ?: "emptyImage"
+
+                        MY_REF.child(image).setValue(
+                            User(
+                                name = AUTH.currentUser?.displayName,
+                                messageId = image,
+                                photoUrl = imageUrl
+                            )
+                        )
                     }
                 }
                 .addOnFailureListener { exception ->
@@ -138,7 +167,6 @@ class MainActivity : AppCompatActivity() {
      */
     private fun initRcView() = with(binding){
         adapter = UserAdapter() // Инизиализируем адаптер
-
         /**
          * мы устанавливаем для rcView (RecyclerView) менеджер компоновки LinearLayoutManager,
          * который позволяет отображать элементы списка в виде вертикального списка.
@@ -198,10 +226,10 @@ class MainActivity : AppCompatActivity() {
                 val list = ArrayList<User>()
                  for (s in snapshot.children){
                      val user = s.getValue(User::class.java)
-                     if (user != null)list.add(user) // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
-
+                     if (user != null){
+                         list.add(user)
+                     } // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
                  }
-
                 adapter.submitList(list) // Мы передаем этот список list в адаптер списка adapter с помощью метода submitList, который обновляет данные в списке и вызывает перерисовку списка.
             }
 
@@ -248,5 +276,6 @@ class MainActivity : AppCompatActivity() {
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
     }
+
 
 }

@@ -8,10 +8,16 @@ import com.google.firebase.storage.StorageReference
 
 lateinit var APP_ACTIVITY: MainActivity
 
-lateinit var REF_STORAGE_ROOT: StorageReference
+lateinit var REF_STORAGE_ROOT: StorageReference // REF_STORAGE_ROOT
 
 lateinit var MY_REF: DatabaseReference
 
 lateinit var DATABASE: FirebaseDatabase
 
 lateinit var AUTH: FirebaseAuth
+
+lateinit var CURRENT_UID: String
+
+const val NODE_MESSAGE = "message"
+
+

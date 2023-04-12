@@ -7,12 +7,21 @@
     android:layout_height="wrap_content">
 
     <ImageView
+        android:id="@+id/userPhotoImage"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginEnd="3dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <ImageView
         android:id="@+id/imageMyMessage"
         android:layout_width="200dp"
         android:layout_height="300dp"
         android:layout_marginTop="5dp"
-        android:layout_marginEnd="5dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="3dp"
+        app:layout_constraintEnd_toStartOf="@+id/userPhotoImage"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
 </androidx.constraintlayout.widget.ConstraintLayout>

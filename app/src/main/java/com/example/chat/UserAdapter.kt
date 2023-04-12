@@ -1,30 +1,22 @@
 package com.example.chat
 
-import android.util.Log
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.chat.util.CURRENT_UID
-import com.example.chat.util.MY_REF
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.example.chat.util.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
-import com.squareup.picasso.Picasso
-
-
-/**
- * UserAdapter это класс адаптера RecyclerView, который отвечает за заполнение элементов списка данными.
- * Он наследуется от класса ListAdapter и использует внутри себя класс ItemHolder для хранения вьюх элементов списка.
- *
- * ListAdapter отслеживает изменения в списке данных и обновляет список, когда данные изменяются.
- * В качестве параметров, ListAdapter принимает два типа: модель данных и объект типа ViewHolder.
- *
- * ItemComparator() передается в качестве параметра в конструктор ListAdapter и используется для сравнения объектов в списке данных.
- */
 
 class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) {
 
@@ -36,12 +28,21 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         const val VIEW_TYPE_OTHER_IMAGE = 4
     }
 
-    class  ItemMyMessageHolder(item: View): RecyclerView.ViewHolder(item){
+    class ItemMyMessageHolder(item: View) : RecyclerView.ViewHolder(item) {
 
+        private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhoto)
         private val messageTextView: TextView = itemView.findViewById(R.id.myMessage)
         private val userNameTextView: TextView = itemView.findViewById(R.id.myName)
 
+        @RequiresApi(Build.VERSION_CODES.O_MR1)
         fun bindMyMessage(user: User) {
+
+            Glide.with(APP_ACTIVITY)
+                .load(user.avatarUrl)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .circleCrop()
+                .into(imagePhotoUser)
+
             messageTextView.text = user.message
             userNameTextView.text = user.name
             itemView.setOnLongClickListener {
@@ -55,15 +56,28 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
     class ItemMyImageHolder(item: View): RecyclerView.ViewHolder(item){
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageMyMessage)
+        private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhotoImage)
 
         fun bindMyImage(user: User) {
-            Picasso.get().load(user.photoUrl).into(imageView)
+
+            Glide.with(APP_ACTIVITY)
+                .load(user.photoUrl)
+                .transform(CenterCrop(), RoundedCorners(60))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(imageView)
+
+            Glide.with(APP_ACTIVITY)
+                .load(user.avatarUrl)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .circleCrop()
+                .into(imagePhotoUser)
+
             itemView.setOnLongClickListener {
                 val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
                 sad.delete().addOnSuccessListener {
                     MY_REF.child(user.messageId!!).removeValue()
                 }
-                    true
+                true
             }
         }
     }
@@ -76,11 +90,6 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         fun bindOtherMessage(user: User) {
             messageTextView.text = user.message
             userNameTextView.text = user.name
-//            itemView.setOnLongClickListener {
-//                val messageId = user.messageId
-//                MY_REF.child(messageId!!).removeValue()
-//                true
-//            }
         }
     }
 
@@ -89,14 +98,11 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         private val imageView: ImageView = itemView.findViewById(R.id.imageOtherMessage)
 
         fun bindOtherImage(user: User) {
-            Picasso.get().load(user.photoUrl).into(imageView)
-//            itemView.setOnLongClickListener {
-//                val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
-//                sad.delete().addOnSuccessListener {
-//                    MY_REF.child(user.messageId!!).removeValue()
-//                }
-//                true
-//            }
+            Glide.with(APP_ACTIVITY)
+                .load(user.photoUrl)
+                .transform(CenterCrop(), RoundedCorners(60))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(imageView)
         }
     }
 
@@ -132,6 +138,7 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val user = getItem(position)
         when (holder.itemViewType) {

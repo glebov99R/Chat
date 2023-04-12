@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
@@ -12,6 +13,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
@@ -28,7 +30,6 @@ import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -36,10 +37,10 @@ class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
     lateinit var adapter: UserAdapter
 
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
-
         setContentView(binding.root)
 
         AUTH = Firebase.auth // Firebase.auth возвращает объект класса FirebaseAuth, который предоставляет API для аутентификации пользователей в приложении Firebase.
@@ -50,15 +51,21 @@ class MainActivity : AppCompatActivity() {
 
         REF_STORAGE_ROOT = FirebaseStorage.getInstance().reference.child("images") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
 
+        AVATAR_USER = FirebaseStorage.getInstance().reference.child("avatar") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать аватар пользователя
+
         APP_ACTIVITY = this // Ссылка на наше Activity
 
         CURRENT_UID = AUTH.currentUser?.uid.toString() // Уникальный идентификатор пользователя
 
+//        setUpActionBar() // Устанавливаем topBar
 
-        setUpActionBar()
+        getUrlAvatar() // Получение url текущей аввтарки пользователля
+
+        initRcView() // Инизиализируем метод initRcView
+
+        onChangeRouteListener(MY_REF) // Функция прослушивает изменения на пути myRef(message)
 
         binding.thisMessage.addTextChangedListener {
-
             if (binding.thisMessage.text.isEmpty()){
                 binding.bSend.visibility = View.GONE
                 binding.bAttach.visibility = View.VISIBLE
@@ -66,16 +73,17 @@ class MainActivity : AppCompatActivity() {
                 binding.bSend.visibility = View.VISIBLE
                 binding.bAttach.visibility = View.GONE
             }
-
         }
 
-        binding.bAttach.setOnClickListener { chooseImage() }
+        binding.bAttach.setOnClickListener {
+            chooseImage()
+        }
 
-
+        binding.bACamera.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
 
         binding.bSend.setOnClickListener {
-
-            val currentTime: String = Calendar.getInstance().time.toString()
 
             val messageId = MY_REF.push().key ?: "emptyPath"
 
@@ -84,46 +92,14 @@ class MainActivity : AppCompatActivity() {
                         name = AUTH.currentUser?.displayName,
                         message = binding.thisMessage.text.toString(),
                         messageId = messageId,
-                        userId = CURRENT_UID
+                        userId = CURRENT_UID,
+                        avatarUrl = URL_AVATAR
                     )
                 )
                 binding.thisMessage.setText("")
-
-            Log.d("timesMessag", currentTime)
         }
 
-        /**
-         * Функция прослушивает изменения на пути myRef(message)
-         */
-        onChangeRouteListener(MY_REF)
-
-        initRcView() // Инизиализируем метод initRcView
-        binding.bACamera.setOnClickListener {
-            dispatchTakePictureIntent()
-        }
     }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//    private val takePictureLauncherOld = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//        if (result.resultCode == Activity.RESULT_OK) {
-//            // Получаем изображение из Intent и загружаем его в Firebase Storage
-//            val imageUri = result.data?.extras?.get(MediaStore.EXTRA_OUTPUT) as? Uri
-//            Log.d("imageg121","${imageUri}")
-//            uploadImageToFirebaseStorage(imageUri)
-//        }
-//    }
-//
-//    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//        if (result.resultCode == Activity.RESULT_OK) {
-//            val imageUri = Uri.parse(currentPhotoPath)
-//            // Для получения постоянного доступа к Uri нужно выполнить takePersistableUriPermission
-//            contentResolver.takePersistableUriPermission(imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//            Log.d("imageg121","${imageUri}")
-//            uploadImageToFirebaseStorage(imageUri)
-//        }
-//    }
-
 
     private lateinit var currentPhotoPath: String
 
@@ -156,10 +132,8 @@ class MainActivity : AppCompatActivity() {
             val photoFile: File? = try {
                 createImageFile()
             } catch (ex: IOException) {
-                // Error occurred while creating the File
                 null
             }
-            // Continue only if the File was successfully created
             photoFile?.also {
                 val photoURI: Uri = FileProvider.getUriForFile(
                     this,
@@ -167,14 +141,11 @@ class MainActivity : AppCompatActivity() {
                     it
                 )
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-//                takePictureLauncher.launch(takePictureIntent)
-//                takePictureLauncherOld.launch(takePictureIntent)
                 takePicture.launch(takePictureIntent)
             }
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
@@ -195,13 +166,13 @@ class MainActivity : AppCompatActivity() {
         // Проверяем, что URI изображения не является null
         imageUri?.let { uri ->
             // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
-            val storageReference = FirebaseStorage.getInstance().reference.child("images")
+//            val storageReference = FirebaseStorage.getInstance().reference.child("images")
 
             // Создаем уникальное имя файла на основе текущего времени
             val fileName = "image_${System.currentTimeMillis()}.jpg"
 
             // Создаем ссылку на файл в Firebase Storage
-            val imageRef = storageReference.child(fileName)
+            val imageRef = REF_STORAGE_ROOT.child(fileName)
 
             // Загружаем изображение в Firebase Storage
             imageRef.putFile(uri)
@@ -217,7 +188,8 @@ class MainActivity : AppCompatActivity() {
                                 name = AUTH.currentUser?.displayName,
                                 messageId = image,
                                 photoUrl = imageUrl,
-                                userId = CURRENT_UID
+                                userId = CURRENT_UID,
+                                avatarUrl = URL_AVATAR
                             )
                         )
                     }
@@ -225,6 +197,33 @@ class MainActivity : AppCompatActivity() {
                 .addOnFailureListener { exception ->
                     // Обработка ошибки загрузки изображения
                     Log.e("23", "Error uploading image to Firebase Storage: ${exception.message}")
+                }
+        }
+    }
+
+
+    private fun chooseAvatar() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        pickAvatar.launch(Intent.createChooser(intent, "Select Image"))
+    }
+
+    private val pickAvatar = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val selectedImageUri = result.data?.data
+            uploadAvatarToFirebaseStorage(selectedImageUri)
+        }
+    }
+
+    private fun uploadAvatarToFirebaseStorage(imageUri: Uri?) {
+        imageUri?.let { uri ->
+            val fileName = "image_avatar.jpg"
+            val imageRef = AVATAR_USER.child(fileName)
+            imageRef.putFile(uri)
+                .addOnSuccessListener { taskSnapshot ->
+                    taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+                        URL_AVATAR = uri.toString()
+                    }
                 }
         }
     }
@@ -245,6 +244,21 @@ class MainActivity : AppCompatActivity() {
          */
         rcView.adapter = adapter
     }
+
+    /**
+     * Функция нужна для получение url ссылки на аватарку пользователя
+     */
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
+    private fun getUrlAvatar() {
+        val storageRef = FirebaseStorage
+            .getInstance().reference.child("avatar").child("image_avatar.jpg")
+        storageRef.downloadUrl.addOnSuccessListener { url ->
+            URL_AVATAR = url.toString()
+        }.addOnSuccessListener {
+            setUpActionBar()
+        }
+    }
+
 
     /**
      * Функция используется для создания меню при запуске активности.
@@ -268,8 +282,13 @@ class MainActivity : AppCompatActivity() {
             AUTH.signOut()
             finish()
         }
+        if (item.itemId == R.id.download_avatar){
+            chooseAvatar()
+        }
         return super.onOptionsItemSelected(item)
     }
+
+
 
     /**
      * Функция принимает узел dRef который мы хотим прослушивать на изменения.
@@ -311,16 +330,23 @@ class MainActivity : AppCompatActivity() {
     /**
      * Функция используется для настройки ActionBar
      */
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
     private fun setUpActionBar(){
         val ab = supportActionBar // Метод supportActionBar используется для получения объекта ActionBar для текущей активности.
         Thread{
+
             /**
              * В данном случае, код использует объект auth класса FirebaseAuth для получения URL-адреса изображения профиля текущего пользователя
              * и передает его в качестве параметра в метод Picasso.get().load(). Метод load() загружает изображение по указанному URL-адресу.
              * Затем метод get() вызывается для получения объекта Bitmap, который представляет загруженное изображение.
              * Наконец, объект Bitmap сохраняется в переменной bMap для использования в дальнейшем, например, для создания объекта BitmapDrawable для установки значка кнопки "Домой" ActionBar
              */
-            val bMap = Picasso.get().load(AUTH.currentUser?.photoUrl).get()
+            val bMap = Picasso
+                .get()
+                .load(URL_AVATAR)
+                .resize(100,130)
+                .transform(CircleTransform())
+                .get()
 
             /**
              * Код создает новый объект BitmapDrawable, используя ресурсы приложения и объект bMap,
@@ -343,9 +369,5 @@ class MainActivity : AppCompatActivity() {
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
     }
-
-
-
-
 
 }

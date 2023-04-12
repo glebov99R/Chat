@@ -4,6 +4,7 @@ import com.example.chat.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.core.Context
 import com.google.firebase.storage.StorageReference
 
 lateinit var APP_ACTIVITY: MainActivity
@@ -20,5 +21,8 @@ lateinit var CURRENT_UID: String
 
 const val NODE_MESSAGE = "message"
 
+lateinit var AVATAR_USER : StorageReference
+
+lateinit var URL_AVATAR: String
 
 

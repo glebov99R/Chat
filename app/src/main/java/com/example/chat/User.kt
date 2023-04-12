@@ -11,5 +11,6 @@ data class User(
     val messageId: String? = null,
     var photoUrl: String? = null,
     val userId:  String? = null,
-    var timeMessage: String? = null
+    var timeMessage: String? = null,
+    var avatarUrl: String? = null
 )

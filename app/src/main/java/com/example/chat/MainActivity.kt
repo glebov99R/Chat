@@ -29,6 +29,10 @@ import com.squareup.picasso.Picasso
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -93,13 +97,14 @@ class MainActivity : AppCompatActivity() {
                         message = binding.thisMessage.text.toString(),
                         messageId = messageId,
                         userId = CURRENT_UID,
+                        timeMessage = getCurrentTimeFormatted(),
                         avatarUrl = URL_AVATAR
                     )
                 )
                 binding.thisMessage.setText("")
         }
-
     }
+
 
     private lateinit var currentPhotoPath: String
 
@@ -146,7 +151,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             // Обработка выбранного изображения
@@ -189,6 +193,7 @@ class MainActivity : AppCompatActivity() {
                                 messageId = image,
                                 photoUrl = imageUrl,
                                 userId = CURRENT_UID,
+                                timeMessage = getCurrentTimeFormatted(),
                                 avatarUrl = URL_AVATAR
                             )
                         )

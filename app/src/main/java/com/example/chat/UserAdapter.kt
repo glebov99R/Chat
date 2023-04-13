@@ -44,7 +44,7 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
                 .into(imagePhotoUser)
 
             messageTextView.text = user.message
-            userNameTextView.text = user.name
+            userNameTextView.text = user.timeMessage
 
             itemView.setOnLongClickListener {
                 val messageId = user.messageId

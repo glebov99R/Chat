@@ -113,17 +113,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
-    private lateinit var currentPhotoPath: String
-
-    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val file = File(currentPhotoPath)
-            val imageUri = Uri.fromFile(file)
-            uploadImageToFirebaseStorage(imageUri)
-        }
-    }
-
     @Throws(IOException::class)
     private fun createImageFile(): File {
         // Создаём фаил изображения
@@ -136,6 +125,15 @@ class MainActivity : AppCompatActivity() {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    private lateinit var currentPhotoPath: String
+    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val file = File(currentPhotoPath)
+            val imageUri = Uri.fromFile(file)
+            uploadImageToFirebaseStorage(imageUri)
         }
     }
 
@@ -159,6 +157,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
+    private fun chooseImage() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        pickImageLauncher.launch(Intent.createChooser(intent, "Select Image"))
+    }
+
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             // Обработка выбранного изображения
@@ -168,18 +174,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chooseImage() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        pickImageLauncher.launch(Intent.createChooser(intent, "Select Image"))
-    }
-
     private fun uploadImageToFirebaseStorage(imageUri: Uri?) {
         // Проверяем, что URI изображения не является null
         imageUri?.let { uri ->
-            // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
-//            val storageReference = FirebaseStorage.getInstance().reference.child("images")
-
             // Создаем уникальное имя файла на основе текущего времени
             val fileName = "image_${System.currentTimeMillis()}.jpg"
 
@@ -191,6 +188,7 @@ class MainActivity : AppCompatActivity() {
                 .addOnSuccessListener { taskSnapshot ->
                     // Получаем ссылку на загруженное изображение
                     taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+
                         val imageUrl = uri.toString()  // Ваш код обработки ссылки на изображение
 
                         val image = MY_REF.push().key ?: "emptyImage"

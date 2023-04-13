@@ -43,7 +43,6 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
                 MY_REF.child(messageId!!).removeValue()
                 true
             }
-
         }
     }
 
@@ -120,7 +119,6 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
                 ItemOtherImageHolder(view)
             }
             else -> throw IllegalArgumentException("Invalid view type")
-
         }
     }
 
@@ -154,6 +152,5 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
             false -> if (user.photoUrl != null) VIEW_TYPE_OTHER_IMAGE else VIEW_TYPE_OTHER_TEXT
         }
     }
-
 }
 

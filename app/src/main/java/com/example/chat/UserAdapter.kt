@@ -1,6 +1,9 @@
 package com.example.chat
 
 import android.os.Build
+import android.text.Editable
+import android.text.TextUtils
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -45,6 +48,8 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
 
             messageTextView.text = user.message
             userNameTextView.text = user.timeMessage
+
+            messageTextView.setupMessageTextView(itemView)
 
             itemView.setOnLongClickListener {
                 val messageId = user.messageId
@@ -99,7 +104,9 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
                 .into(imagePhotoUser)
 
             messageTextView.text = user.message
-            userNameTextView.text = user.name
+            userNameTextView.text = user.timeMessage
+
+            messageTextView.setupMessageTextView(itemView)
         }
     }
 

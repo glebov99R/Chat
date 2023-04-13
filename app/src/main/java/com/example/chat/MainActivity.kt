@@ -8,20 +8,16 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.Editable
-import android.text.TextUtils
-import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.EditText
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.util.*
@@ -31,13 +27,12 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -93,24 +88,37 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bSend.setOnClickListener {
-
-            val messageId = MY_REF.push().key ?: "emptyPath"
-
-            MY_REF.child(messageId).setValue(
-                    User(
-                        name = AUTH.currentUser?.displayName,
-                        message = binding.thisMessage.text.toString(),
-                        messageId = messageId,
-                        userId = CURRENT_UID,
-                        timeMessage = getCurrentTimeFormatted(),
-                        avatarUrl = URL_AVATAR
-                    )
+            lifecycleScope.launch {
+                sendMessage(
+                    message = binding.thisMessage.text.toString(),
+                    photoUrl = null
                 )
                 binding.thisMessage.setText("")
+            }
         }
 
     }
 
+
+    suspend fun sendMessage(
+         message: String? = null,
+         photoUrl: String? = null,
+    ){
+        withContext(Dispatchers.IO){
+            val key = MY_REF.push().key ?: "emptyPath"
+            MY_REF.child(key).setValue(
+                User(
+                    name = AUTH.currentUser?.displayName,
+                    message = message,
+                    messageId = key,
+                    photoUrl = photoUrl,
+                    userId = CURRENT_UID,
+                    timeMessage = getCurrentTimeFormatted(),
+                    avatarUrl = URL_AVATAR
+                )
+            )
+        }
+    }
 
 
     @Throws(IOException::class)
@@ -188,21 +196,11 @@ class MainActivity : AppCompatActivity() {
                 .addOnSuccessListener { taskSnapshot ->
                     // Получаем ссылку на загруженное изображение
                     taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
-
-                        val imageUrl = uri.toString()  // Ваш код обработки ссылки на изображение
-
-                        val image = MY_REF.push().key ?: "emptyImage"
-
-                        MY_REF.child(image).setValue(
-                            User(
-                                name = AUTH.currentUser?.displayName,
-                                messageId = image,
-                                photoUrl = imageUrl,
-                                userId = CURRENT_UID,
-                                timeMessage = getCurrentTimeFormatted(),
-                                avatarUrl = URL_AVATAR
+                        lifecycleScope.launch {
+                            sendMessage(
+                                photoUrl = uri.toString()
                             )
-                        )
+                        }
                     }
                 }
                 .addOnFailureListener { exception ->

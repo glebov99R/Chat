@@ -99,6 +99,22 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    /**
+     * Функция которая инициализирует RecyclerView и устанавливает адаптер для него.
+     */
+    private fun initRcView() = with(binding){
+        adapter = UserAdapter() // Инизиализируем адаптер
+        /**
+         * мы устанавливаем для rcView (RecyclerView) менеджер компоновки LinearLayoutManager,
+         * который позволяет отображать элементы списка в виде вертикального списка.
+         */
+        rcView.layoutManager = LinearLayoutManager(this@MainActivity)
+        /**
+         * Далее мы устанавливаем адаптер для rcView с помощью метода setAdapter.
+         * Это связывает наш адаптер UserAdapter с rcView и позволяет отображать данные из списка в RecyclerView.
+         */
+        rcView.adapter = adapter
+    }
 
     suspend fun sendMessage(
          message: String? = null,
@@ -238,23 +254,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Функция которая инициализирует RecyclerView и устанавливает адаптер для него.
-     */
-    private fun initRcView() = with(binding){
-        adapter = UserAdapter() // Инизиализируем адаптер
-        /**
-         * мы устанавливаем для rcView (RecyclerView) менеджер компоновки LinearLayoutManager,
-         * который позволяет отображать элементы списка в виде вертикального списка.
-         */
-        rcView.layoutManager = LinearLayoutManager(this@MainActivity)
-        /**
-         * Далее мы устанавливаем адаптер для rcView с помощью метода setAdapter.
-         * Это связывает наш адаптер UserAdapter с rcView и позволяет отображать данные из списка в RecyclerView.
-         */
-        rcView.adapter = adapter
-    }
-
-    /**
      * Функция нужна для получение url ссылки на аватарку пользователя
      */
     @RequiresApi(Build.VERSION_CODES.O_MR1)
@@ -306,7 +305,6 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-
     /**
      * Функция принимает узел dRef который мы хотим прослушивать на изменения.
      */
@@ -334,6 +332,10 @@ class MainActivity : AppCompatActivity() {
                     } // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
                 }
                 adapter.submitList(list) // Мы передаем этот список list в адаптер списка adapter с помощью метода submitList, который обновляет данные в списке и вызывает перерисовку списка.
+
+                binding.rcView.postDelayed({
+                    binding.rcView.smoothScrollToPosition(adapter.itemCount - 1)
+                }, 100)
             }
 
             /**

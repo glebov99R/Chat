@@ -1,9 +1,6 @@
 package com.example.chat
 
 import android.os.Build
-import android.text.Editable
-import android.text.TextUtils
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,10 +10,6 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.chat.util.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
@@ -40,16 +33,10 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         @RequiresApi(Build.VERSION_CODES.O_MR1)
         fun bindMyMessage(user: User) {
 
-            Glide.with(APP_ACTIVITY)
-                .load(user.avatarUrl)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .circleCrop()
-                .into(imagePhotoUser)
-
-            messageTextView.text = user.message
-            userNameTextView.text = user.timeMessage
-
             messageTextView.setupMessageTextView(itemView)
+            messageTextView.text = user.message
+            setupUserAvatar(user, imagePhotoUser)
+            userNameTextView.text = user.timeMessage
 
             itemView.setOnLongClickListener {
                 val messageId = user.messageId
@@ -67,17 +54,8 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
 
         fun bindMyImage(user: User) {
 
-            Glide.with(APP_ACTIVITY)
-                .load(user.photoUrl)
-                .transform(CenterCrop(), RoundedCorners(60))
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .into(imageView)
-
-            Glide.with(APP_ACTIVITY)
-                .load(user.avatarUrl)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .circleCrop()
-                .into(imagePhotoUser)
+            setupImageView(user,imageView)
+            setupUserAvatar(user, imagePhotoUser)
 
             itemView.setOnLongClickListener {
                 val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
@@ -96,16 +74,9 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         private val userNameTextView: TextView = itemView.findViewById(R.id.otherName)
 
         fun bindOtherMessage(user: User) {
-
-            Glide.with(APP_ACTIVITY)
-                .load(user.avatarUrl)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .circleCrop()
-                .into(imagePhotoUser)
-
             messageTextView.text = user.message
             userNameTextView.text = user.timeMessage
-
+            setupUserAvatar(user, imagePhotoUser)
             messageTextView.setupMessageTextView(itemView)
         }
     }
@@ -116,18 +87,8 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.otherUserPhotoImage)
 
         fun bindOtherImage(user: User) {
-
-            Glide.with(APP_ACTIVITY)
-                .load(user.avatarUrl)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .circleCrop()
-                .into(imagePhotoUser)
-
-            Glide.with(APP_ACTIVITY)
-                .load(user.photoUrl)
-                .transform(CenterCrop(), RoundedCorners(60))
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .into(imageView)
+            setupUserAvatar(user, imagePhotoUser)
+            setupImageView(user,imageView)
         }
     }
 

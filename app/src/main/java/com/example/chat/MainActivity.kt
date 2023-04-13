@@ -217,7 +217,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun uploadAvatarToFirebaseStorage(imageUri: Uri?) {
         imageUri?.let { uri ->
-            val fileName = "image_avatar.jpg"
+            val fileName = "${AUTH.currentUser?.uid}.jpg"
             val imageRef = AVATAR_USER.child(fileName)
             imageRef.putFile(uri)
                 .addOnSuccessListener { taskSnapshot ->
@@ -250,12 +250,21 @@ class MainActivity : AppCompatActivity() {
      */
     @RequiresApi(Build.VERSION_CODES.O_MR1)
     private fun getUrlAvatar() {
-        val storageRef = FirebaseStorage
-            .getInstance().reference.child("avatar").child("image_avatar.jpg")
-        storageRef.downloadUrl.addOnSuccessListener { url ->
-            URL_AVATAR = url.toString()
-        }.addOnSuccessListener {
-            setUpActionBar()
+        val storageRef = FirebaseStorage.getInstance().reference.child("avatar")
+        storageRef.listAll().addOnSuccessListener { listResult ->
+            if (listResult.items.isNotEmpty()) {
+                for (item in listResult.items) {
+                    val itemRefName = item.name
+                    if (itemRefName == AUTH.currentUser?.uid + ".jpg") {
+                        val pathReference = storageRef.child(itemRefName)
+                        pathReference.downloadUrl.addOnSuccessListener { url ->
+                            URL_AVATAR = url.toString()
+                        }.addOnSuccessListener {
+                            setUpActionBar()
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -278,16 +287,15 @@ class MainActivity : AppCompatActivity() {
      *  Таким образом, если пользователь выбирает пункт меню, то сначала выполняются определенные действия, а затем управление передается в базовый класс для дополнительной обработки.
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.sign_out){
+        if (item.itemId == R.id.sign_out) {
             AUTH.signOut()
             finish()
         }
-        if (item.itemId == R.id.download_avatar){
+        if (item.itemId == R.id.download_avatar) {
             chooseAvatar()
         }
         return super.onOptionsItemSelected(item)
     }
-
 
 
     /**
@@ -310,12 +318,12 @@ class MainActivity : AppCompatActivity() {
              */
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = ArrayList<User>()
-                 for (s in snapshot.children){
-                     val user = s.getValue(User::class.java)
-                     if (user != null){
-                         list.add(user)
-                     } // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
-                 }
+                for (s in snapshot.children) {
+                    val user = s.getValue(User::class.java)
+                    if (user != null) {
+                        list.add(user)
+                    } // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
+                }
                 adapter.submitList(list) // Мы передаем этот список list в адаптер списка adapter с помощью метода submitList, который обновляет данные в списке и вызывает перерисовку списка.
             }
 

@@ -45,11 +45,13 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
 
             messageTextView.text = user.message
             userNameTextView.text = user.name
+
             itemView.setOnLongClickListener {
                 val messageId = user.messageId
                 MY_REF.child(messageId!!).removeValue()
                 true
             }
+
         }
     }
 
@@ -84,10 +86,18 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
 
     class  ItemOtherMessageHolder(item: View): RecyclerView.ViewHolder(item){
 
+        private val imagePhotoUser: ImageView = itemView.findViewById(R.id.otherPhotoUser)
         private val messageTextView: TextView = itemView.findViewById(R.id.otherMessage)
         private val userNameTextView: TextView = itemView.findViewById(R.id.otherName)
 
         fun bindOtherMessage(user: User) {
+
+            Glide.with(APP_ACTIVITY)
+                .load(user.avatarUrl)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .circleCrop()
+                .into(imagePhotoUser)
+
             messageTextView.text = user.message
             userNameTextView.text = user.name
         }
@@ -96,8 +106,16 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
     class ItemOtherImageHolder(item: View): RecyclerView.ViewHolder(item){
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageOtherMessage)
+        private val imagePhotoUser: ImageView = itemView.findViewById(R.id.otherUserPhotoImage)
 
         fun bindOtherImage(user: User) {
+
+            Glide.with(APP_ACTIVITY)
+                .load(user.avatarUrl)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .circleCrop()
+                .into(imagePhotoUser)
+
             Glide.with(APP_ACTIVITY)
                 .load(user.photoUrl)
                 .transform(CenterCrop(), RoundedCorners(60))

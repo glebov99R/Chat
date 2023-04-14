@@ -46,13 +46,11 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
         }
     }
 
-    class ItemMyImageHolder(item: View,private val onMessageLongClickListener: OnMessageLongClickListener): RecyclerView.ViewHolder(item){
+    class ItemMyImageHolder(item: View, private val onMessageLongClickListener: OnMessageLongClickListener): RecyclerView.ViewHolder(item){
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageMyMessage)
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhotoImage)
         private val progress: ProgressBar = itemView.findViewById(R.id.progressBar)
-
-
 
         fun bindMyImage(user: User) {
             progress.visibility = View.VISIBLE
@@ -86,7 +84,6 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.otherUserPhotoImage)
         private val progress: ProgressBar = itemView.findViewById(R.id.progressBar2)
 
-
         fun bindOtherImage(user: User) {
             progress.visibility = View.VISIBLE
             setupUserAvatar(user, imagePhotoUser)
@@ -107,7 +104,7 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
         return when (viewType){
             VIEW_TYPE_MY_TEXT -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_message_item, parent, false)
-                ItemMyMessageHolder(view,onMessageLongClickListener)
+                ItemMyMessageHolder(view, onMessageLongClickListener)
             }
             VIEW_TYPE_MY_IMAGE -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_image_item, parent, false)

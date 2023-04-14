@@ -18,8 +18,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.util.*
 import com.google.firebase.auth.ktx.auth
@@ -99,6 +99,29 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
             }
         }
 
+        addEndlessScrollListener(recyclerView = binding.rcView, adapter = adapter) {
+            binding.rcView.postDelayed({
+                binding.rcView.scrollToPosition(adapter.itemCount - 1)
+            }, 100)
+        }
+
+    }
+
+
+    fun addEndlessScrollListener(
+        recyclerView: RecyclerView,
+        adapter: RecyclerView.Adapter<*>,
+        action: () -> Unit
+    ) {
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    // Список достиг конца(заполнение списка завершено), выполните ваш код здесь
+                    action.invoke()
+                }
+            }
+        })
     }
 
     /**
@@ -141,7 +164,6 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
             }, 100)
         }
     }
-
 
     @Throws(IOException::class)
     private fun createImageFile(): File {
@@ -186,8 +208,6 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
             }
         }
     }
-
-
 
     private fun chooseImage() {
         val intent = Intent(Intent.ACTION_PICK)
@@ -275,6 +295,9 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
                             URL_AVATAR = url.toString()
                         }.addOnSuccessListener {
                             setUpActionBar()
+                            binding.rcView.postDelayed({
+                                binding.rcView.scrollToPosition(adapter.itemCount - 1)
+                            }, 100)
                         }
                     }
                 }

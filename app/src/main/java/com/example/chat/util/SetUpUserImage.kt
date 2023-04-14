@@ -1,8 +1,6 @@
 package com.example.chat.util
 
-
 import android.graphics.drawable.Drawable
-import android.os.RecoverySystem
 import android.view.View
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -47,7 +45,6 @@ fun setupImageView(user: User, imageView: ImageView, progressBar: ProgressBar){
         .diskCacheStrategy(DiskCacheStrategy.ALL)
         .listener(listener)
         .into(imageView)
-
 }
 
 fun setupUserAvatar(user: User, imageView: ImageView) {

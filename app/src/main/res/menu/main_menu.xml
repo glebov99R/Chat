@@ -3,8 +3,8 @@
 
     <item
         android:id="@+id/sign_out"
-        android:title="Sign Out" />
+        android:title="Выход из аккаунта" />
 
-    <item android:title="Download Awatar"
+    <item android:title="Изменить аватар"
         android:id="@+id/download_avatar"  />
 </menu>

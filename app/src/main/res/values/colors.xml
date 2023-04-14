@@ -16,4 +16,6 @@
     <color name="black1">#FF000000</color>
     <color name="white1">#FFFFFFFF</color>
 
+    <color name="test">#292929</color>
+
 </resources>

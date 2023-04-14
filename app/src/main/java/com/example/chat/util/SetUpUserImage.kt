@@ -90,18 +90,36 @@ fun setDrawableBackgroundFromUrl(
     imageName: String,
     view: View,
 ) {
-    saveImageFromUrlToDrawable(context, imageUrl, imageName)
+    val file = File(context.filesDir,imageName)
+
+    if (file.isFile){
+
+        Glide.with(context)
+            .load(File(context.filesDir, imageName))
+            .centerCrop()
+            .into(object : CustomViewTarget<View, Drawable>(view) {
+                override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+                override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+            })
+    } else {
+
+        saveImageFromUrlToDrawable(context, imageUrl, imageName)
+
+        Glide.with(context)
+            .load(File(context.filesDir, imageName))
+            .centerCrop()
+            .into(object : CustomViewTarget<View, Drawable>(view) {
+                override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+                override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+            })
+    }
+
+
 
 //    val backgroundImageResourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
 
-    Glide.with(context)
-        .load(File(context.filesDir, imageName))
-        .centerCrop()
 
-        .into(object : CustomViewTarget<View, Drawable>(view) {
-            override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
-            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
-            override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
-        })
 }
 

@@ -1,5 +1,8 @@
 package com.example.chat.util
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
@@ -11,8 +14,14 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.target.SimpleTarget
 import com.example.chat.User
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.Transition
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 fun setupImageView(user: User, imageView: ImageView, progressBar: ProgressBar){
 
@@ -53,5 +62,46 @@ fun setupUserAvatar(user: User, imageView: ImageView) {
         .diskCacheStrategy(DiskCacheStrategy.NONE)
         .circleCrop()
         .into(imageView)
+}
+
+
+fun saveImageFromUrlToDrawable(context: Context, imageUrl: String, imageName: String) {
+    Glide.with(context)
+        .asBitmap()
+        .diskCacheStrategy(DiskCacheStrategy.ALL)
+        .load(imageUrl)
+        .into(object : SimpleTarget<Bitmap>() {
+            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+//                val drawable = BitmapDrawable(context.resources, resource)
+                try {
+                    val outputStream = context.openFileOutput(imageName, Context.MODE_PRIVATE)
+                    resource.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                    outputStream.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        })
+}
+
+fun setDrawableBackgroundFromUrl(
+    context: Context,
+    imageUrl: String,
+    imageName: String,
+    view: View,
+) {
+    saveImageFromUrlToDrawable(context, imageUrl, imageName)
+
+//    val backgroundImageResourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
+
+    Glide.with(context)
+        .load(File(context.filesDir, imageName))
+        .centerCrop()
+        .diskCacheStrategy(DiskCacheStrategy.ALL)
+        .into(object : CustomViewTarget<View, Drawable>(view) {
+            override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+            override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+        })
 }
 

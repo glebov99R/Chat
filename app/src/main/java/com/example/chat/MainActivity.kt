@@ -15,6 +15,7 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
@@ -104,6 +105,18 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
                 binding.rcView.scrollToPosition(adapter.itemCount - 1)
             }, 100)
         }
+
+        val imageUrl = "https://oir.mobi/uploads/posts/2022-08/1661337065_34-oir-mobi-p-fon-dlya-telegram-oboi-37.jpg"
+        val imageName = "background_image.jpg"
+        val backgroundView = binding.clMainActivity
+
+
+        setDrawableBackgroundFromUrl(
+            this,
+            imageUrl,
+            imageName,
+            backgroundView
+        )
 
     }
 

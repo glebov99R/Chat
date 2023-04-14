@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.util.*
@@ -26,6 +27,7 @@ import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener {
 
     lateinit var binding: ActivityMainBinding
     lateinit var adapter: UserAdapter
@@ -65,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
         getUrlAvatar() // Получение url текущей аввтарки пользователля
 
-        initRcView() // Инизиализируем метод initRcView
+        initRcView(this) // Инизиализируем метод initRcView
 
         onChangeRouteListener(MY_REF) // Функция прослушивает изменения на пути myRef(message)
 
@@ -102,8 +104,8 @@ class MainActivity : AppCompatActivity() {
     /**
      * Функция которая инициализирует RecyclerView и устанавливает адаптер для него.
      */
-    private fun initRcView() = with(binding){
-        adapter = UserAdapter() // Инизиализируем адаптер
+    private fun initRcView(listener: UserAdapter.OnMessageLongClickListener) = with(binding){
+        adapter = UserAdapter(listener) // Инизиализируем адаптер
         /**
          * мы устанавливаем для rcView (RecyclerView) менеджер компоновки LinearLayoutManager,
          * который позволяет отображать элементы списка в виде вертикального списка.
@@ -114,6 +116,7 @@ class MainActivity : AppCompatActivity() {
          * Это связывает наш адаптер UserAdapter с rcView и позволяет отображать данные из списка в RecyclerView.
          */
         rcView.adapter = adapter
+
     }
 
     suspend fun sendMessage(
@@ -133,6 +136,9 @@ class MainActivity : AppCompatActivity() {
                     avatarUrl = URL_AVATAR
                 )
             )
+            binding.rcView.postDelayed({
+                binding.rcView.scrollToPosition(adapter.itemCount - 1)
+            }, 100)
         }
     }
 
@@ -309,41 +315,30 @@ class MainActivity : AppCompatActivity() {
      * Функция принимает узел dRef который мы хотим прослушивать на изменения.
      */
     private fun onChangeRouteListener(dRef: DatabaseReference) {
-
-        /**
-         * Внутри функции мы добавляем слушатель addValueEventListener к этому узлу.
-         * Этот слушатель срабатывает каждый раз, когда происходят изменения в узле, на который он был установлен.
-         */
         dRef.addValueEventListener(object : ValueEventListener {
-
-            /**
-             * При изменении в узле происходит вызов функции onDataChange
-             * Внутри функции onDataChange мы считываем данные, которые пришли в snapshot в список list.
-             * В данном случае, snapshot содержит дочерние узлы узла, на который установлен слушатель,
-             * и мы читаем данные из каждого дочернего узла и преобразуем их в объект класса User.
-             * Для этого мы используем метод getValue, который принимает класс объекта, в который необходимо преобразовать данные.
-             */
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = ArrayList<User>()
                 for (s in snapshot.children) {
                     val user = s.getValue(User::class.java)
                     if (user != null) {
                         list.add(user)
-                    } // Мы проверяем, что полученный объект не равен null и добавляем его в список list.
+                    }
                 }
-                adapter.submitList(list) // Мы передаем этот список list в адаптер списка adapter с помощью метода submitList, который обновляет данные в списке и вызывает перерисовку списка.
-
-                binding.rcView.postDelayed({
-                    binding.rcView.smoothScrollToPosition(adapter.itemCount - 1)
-                }, 100)
+                adapter.submitList(list)
             }
-
-            /**
-             * Функция используется для обработки ошибок в случае, если операция чтения или записи в базу данных была отменена.
-             */
             override fun onCancelled(error: DatabaseError) {}
-
         })
+    }
+
+    override fun onMessageLongClick(messageId: String) {
+        MY_REF.child(messageId).removeValue()
+    }
+
+    override fun onImageLongClick(photoUrl: String, messageId: String) {
+        val sad = Firebase.storage.getReferenceFromUrl(photoUrl)
+        sad.delete().addOnSuccessListener {
+            MY_REF.child(messageId).removeValue()
+        }
     }
 
     /**
@@ -388,5 +383,7 @@ class MainActivity : AppCompatActivity() {
         }.start() // создание и запуск нового потока, Когда поток запускается с помощью метода start(), операции загрузки изображения будут выполнены параллельно с главным потоком.
 
     }
+
+
 
 }

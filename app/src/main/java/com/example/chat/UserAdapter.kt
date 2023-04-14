@@ -14,7 +14,7 @@ import com.example.chat.util.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 
-class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) {
+class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickListener): ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) {
 
     companion object {
         const val VIEW_TYPE_MY_TEXT = 1
@@ -24,7 +24,9 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         const val VIEW_TYPE_OTHER_IMAGE = 4
     }
 
-    class ItemMyMessageHolder(item: View) : RecyclerView.ViewHolder(item) {
+
+
+    class ItemMyMessageHolder(item: View,private val onMessageLongClickListener: OnMessageLongClickListener) : RecyclerView.ViewHolder(item) {
 
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhoto)
         private val messageTextView: TextView = itemView.findViewById(R.id.myMessage)
@@ -39,28 +41,24 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
             userNameTextView.text = user.timeMessage
 
             itemView.setOnLongClickListener {
-                val messageId = user.messageId
-                MY_REF.child(messageId!!).removeValue()
+                onMessageLongClickListener.onMessageLongClick(user.messageId!!)
                 true
             }
         }
     }
 
-    class ItemMyImageHolder(item: View): RecyclerView.ViewHolder(item){
+    class ItemMyImageHolder(item: View,private val onMessageLongClickListener: OnMessageLongClickListener): RecyclerView.ViewHolder(item){
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageMyMessage)
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhotoImage)
 
-        fun bindMyImage(user: User) {
 
+        fun bindMyImage(user: User) {
             setupImageView(user,imageView)
             setupUserAvatar(user, imagePhotoUser)
 
             itemView.setOnLongClickListener {
-                val sad = Firebase.storage.getReferenceFromUrl(user.photoUrl!!)
-                sad.delete().addOnSuccessListener {
-                    MY_REF.child(user.messageId!!).removeValue()
-                }
+                onMessageLongClickListener.onImageLongClick(user.photoUrl!!, user.messageId!!)
                 true
             }
         }
@@ -104,11 +102,11 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
         return when (viewType){
             VIEW_TYPE_MY_TEXT -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_message_item, parent, false)
-                ItemMyMessageHolder(view)
+                ItemMyMessageHolder(view,onMessageLongClickListener)
             }
             VIEW_TYPE_MY_IMAGE -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_my_image_item, parent, false)
-                ItemMyImageHolder(view)
+                ItemMyImageHolder(view, onMessageLongClickListener)
             }
             VIEW_TYPE_OTHER_TEXT -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.chat_list_other_message_item, parent, false)
@@ -151,6 +149,11 @@ class UserAdapter: ListAdapter<User, RecyclerView.ViewHolder>(ItemComparator()) 
             true -> if (user.photoUrl != null) VIEW_TYPE_MY_IMAGE else VIEW_TYPE_MY_TEXT
             false -> if (user.photoUrl != null) VIEW_TYPE_OTHER_IMAGE else VIEW_TYPE_OTHER_TEXT
         }
+    }
+
+    interface OnMessageLongClickListener {
+        fun onMessageLongClick(messageId: String)
+        fun onImageLongClick(photoUrl: String, messageId: String)
     }
 }
 

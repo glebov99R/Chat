@@ -21,7 +21,7 @@
         android:layout_margin="5dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp"
-        android:backgroundTint="#13D8F1"
+        android:backgroundTint="#89E7F3"
         app:cardCornerRadius="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/otherPhotoUser"

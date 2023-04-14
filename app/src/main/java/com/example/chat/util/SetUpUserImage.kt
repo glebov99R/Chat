@@ -68,7 +68,7 @@ fun setupUserAvatar(user: User, imageView: ImageView) {
 fun saveImageFromUrlToDrawable(context: Context, imageUrl: String, imageName: String) {
     Glide.with(context)
         .asBitmap()
-        .diskCacheStrategy(DiskCacheStrategy.ALL)
+
         .load(imageUrl)
         .into(object : SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
@@ -97,7 +97,7 @@ fun setDrawableBackgroundFromUrl(
     Glide.with(context)
         .load(File(context.filesDir, imageName))
         .centerCrop()
-        .diskCacheStrategy(DiskCacheStrategy.ALL)
+
         .into(object : CustomViewTarget<View, Drawable>(view) {
             override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
             override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }

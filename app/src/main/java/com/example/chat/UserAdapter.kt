@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.DiffUtil
@@ -23,8 +24,6 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
         const val VIEW_TYPE_OTHER_TEXT = 3
         const val VIEW_TYPE_OTHER_IMAGE = 4
     }
-
-
 
     class ItemMyMessageHolder(item: View,private val onMessageLongClickListener: OnMessageLongClickListener) : RecyclerView.ViewHolder(item) {
 
@@ -51,10 +50,13 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageMyMessage)
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.userPhotoImage)
+        private val progress: ProgressBar = itemView.findViewById(R.id.progressBar)
+
 
 
         fun bindMyImage(user: User) {
-            setupImageView(user,imageView)
+            progress.visibility = View.VISIBLE
+            setupImageView(user,imageView,progress)
             setupUserAvatar(user, imagePhotoUser)
 
             itemView.setOnLongClickListener {
@@ -82,10 +84,13 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
 
         private val imageView: ImageView = itemView.findViewById(R.id.imageOtherMessage)
         private val imagePhotoUser: ImageView = itemView.findViewById(R.id.otherUserPhotoImage)
+        private val progress: ProgressBar = itemView.findViewById(R.id.progressBar2)
+
 
         fun bindOtherImage(user: User) {
+            progress.visibility = View.VISIBLE
             setupUserAvatar(user, imagePhotoUser)
-            setupImageView(user,imageView)
+            setupImageView(user,imageView, progress)
         }
     }
 

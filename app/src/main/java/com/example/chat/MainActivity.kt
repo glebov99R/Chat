@@ -1,9 +1,12 @@
 package com.example.chat
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +25,11 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.transition.Transition
 import com.example.chat.databinding.ActivityMainBinding
 import com.example.chat.util.*
 import com.google.firebase.auth.ktx.auth
@@ -60,6 +68,8 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
         REF_STORAGE_ROOT = FirebaseStorage.getInstance().reference.child("images") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать изображение
 
         AVATAR_USER = FirebaseStorage.getInstance().reference.child("avatar") // Создаем ссылку на папку в Firebase Storage, в которую будем загружать аватар пользователя
+
+        BACKGROUND_CHAT = FirebaseStorage.getInstance().reference.child("background_chat")
 
         APP_ACTIVITY = this // Ссылка на наше Activity
 
@@ -107,16 +117,10 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
             }, 100)
         }
 
-        val imageUrl = "https://oir.mobi/uploads/posts/2022-08/1661337065_34-oir-mobi-p-fon-dlya-telegram-oboi-37.jpg"
-        val imageName = "background_image.jpg"
-        val backgroundView = binding.clMainActivity
-
-
-        setDrawableBackgroundFromUrl(
-            this,
-            imageUrl,
-            imageName,
-            backgroundView
+        setBackgroundChat(
+            context = this,
+            imageName = "backgroundLayout.jpg",
+            view = binding.clMainActivity
         )
 
     }
@@ -153,7 +157,6 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
          * Это связывает наш адаптер UserAdapter с rcView и позволяет отображать данные из списка в RecyclerView.
          */
         rcView.adapter = adapter
-
     }
 
     suspend fun sendMessage(
@@ -293,6 +296,55 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
         }
     }
 
+    private fun chooseBackgroundChat(){
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        pickBackground.launch(Intent.createChooser(intent, "Select Image"))
+    }
+
+    private val pickBackground = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val selectedImageUri = result.data?.data
+            uploadBackgroundChat(selectedImageUri, APP_ACTIVITY,binding.clMainActivity)
+        }
+    }
+
+    private fun uploadBackgroundChat(imageUri: Uri?,context: Context,view: View,) {
+        imageUri?.let { uri ->
+
+            val imageName = "backgroundLayout.jpg"
+            val imageRef = BACKGROUND_CHAT.child("background")
+
+            imageRef.putFile(uri)
+
+            /**
+             * Загружаем картику в директорию приложения
+             */
+            Glide.with(context)
+                .asBitmap()
+                .load(uri)
+                .into(object : SimpleTarget<Bitmap>() {
+                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            val outputStream = context.openFileOutput(imageName, Context.MODE_PRIVATE)
+                            resource.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                            outputStream.close()
+                    }
+                })
+
+            /**
+             * Сетаем картинку в view
+             */
+            Glide.with(context)
+                .load(uri)
+                .centerCrop()
+                .into(object : CustomViewTarget<View, Drawable>(view) {
+                    override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+                    override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+                })
+        }
+    }
+
     /**
      * Функция нужна для получение url ссылки на аватарку пользователя
      */
@@ -344,6 +396,9 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
         }
         if (item.itemId == R.id.download_avatar) {
             chooseAvatar()
+        }
+        if (item.itemId == R.id.change_background_chat){
+            chooseBackgroundChat()
         }
         return super.onOptionsItemSelected(item)
     }

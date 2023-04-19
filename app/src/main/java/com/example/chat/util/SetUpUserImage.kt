@@ -68,7 +68,6 @@ fun setupUserAvatar(user: User, imageView: ImageView) {
 fun saveImageFromUrlToDrawable(context: Context, imageUrl: String, imageName: String) {
     Glide.with(context)
         .asBitmap()
-
         .load(imageUrl)
         .into(object : SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
@@ -116,10 +115,28 @@ fun setDrawableBackgroundFromUrl(
             })
     }
 
-
-
 //    val backgroundImageResourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
+}
 
+fun setBackgroundChat(
+    context: Context,
+    imageName: String,
+    view: View,
+){
+    val file = File(context.filesDir,imageName)
+    if (file.isFile){
 
+        Glide.with(context)
+            .load(File(context.filesDir, imageName))
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .centerCrop()
+            .into(object : CustomViewTarget<View, Drawable>(view) {
+                override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+                override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+            })
+    } else {
+
+    }
 }
 

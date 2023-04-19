@@ -7,4 +7,7 @@
 
     <item android:title="Изменить аватар"
         android:id="@+id/download_avatar"  />
+
+    <item android:title="Изменить фон чата"
+        android:id="@+id/change_background_chat"  />
 </menu>

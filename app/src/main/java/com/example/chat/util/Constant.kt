@@ -23,6 +23,8 @@ const val NODE_MESSAGE = "message"
 
 lateinit var AVATAR_USER : StorageReference
 
+lateinit var BACKGROUND_CHAT: StorageReference
+
 lateinit var URL_AVATAR: String
 
 

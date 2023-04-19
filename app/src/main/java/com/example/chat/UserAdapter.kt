@@ -71,10 +71,11 @@ class UserAdapter(private val onMessageLongClickListener: OnMessageLongClickList
         private val userNameTextView: TextView = itemView.findViewById(R.id.otherName)
 
         fun bindOtherMessage(user: User) {
+            messageTextView.setupMessageTextView(itemView)
             messageTextView.text = user.message
             userNameTextView.text = user.timeMessage
             setupUserAvatar(user, imagePhotoUser)
-            messageTextView.setupMessageTextView(itemView)
+
         }
     }
 

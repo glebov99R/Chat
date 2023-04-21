@@ -124,6 +124,7 @@ fun setBackgroundChat(
     view: View,
 ){
     val file = File(context.filesDir,imageName)
+
     if (file.isFile){
 
         Glide.with(context)
@@ -136,7 +137,17 @@ fun setBackgroundChat(
                 override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
             })
     } else {
-
+        BACKGROUND_CHAT.child("background").downloadUrl.addOnSuccessListener { url ->
+            Glide.with(context)
+                .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .centerCrop()
+                .into(object : CustomViewTarget<View, Drawable>(view) {
+                    override fun onLoadFailed(errorDrawable: Drawable?) { view.background = errorDrawable }
+                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) { view.background = resource }
+                    override fun onResourceCleared(placeholder: Drawable?) { view.background = placeholder }
+                })
+        }
     }
 }
 

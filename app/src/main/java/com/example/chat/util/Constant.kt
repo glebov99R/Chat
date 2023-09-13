@@ -27,5 +27,7 @@ lateinit var BACKGROUND_CHAT: StorageReference
 
 lateinit var URL_AVATAR: String
 
+const val defaultUrlAvatar = "https://firebasestorage.googleapis.com/v0/b/chat-10150.appspot.com/o/avatar%2FbwU2VKdGlNNWN8LB5Rhzfn8Py2C3.jpg?alt=media&token=2822ca65-1f89-4571-a2ca-82d2371934a5"
+
 
 

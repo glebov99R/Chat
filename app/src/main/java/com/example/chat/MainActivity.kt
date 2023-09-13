@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        URL_AVATAR = defaultUrlAvatar
+
         AUTH = Firebase.auth // Firebase.auth возвращает объект класса FirebaseAuth, который предоставляет API для аутентификации пользователей в приложении Firebase.
 
         DATABASE = Firebase.database // Создания инстаннца
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
 
         CURRENT_UID = AUTH.currentUser?.uid.toString() // Уникальный идентификатор пользователя
 
-//        setUpActionBar() // Устанавливаем topBar
+        setUpActionBar() // Устанавливаем topBar
 
         getUrlAvatar() // Получение url текущей аввтарки пользователля
 
@@ -291,6 +293,7 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
                 .addOnSuccessListener { taskSnapshot ->
                     taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
                         URL_AVATAR = uri.toString()
+                        setUpActionBar()
                     }
                 }
         }
@@ -436,7 +439,7 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
     /**
      * Функция используется для настройки ActionBar
      */
-    @RequiresApi(Build.VERSION_CODES.O_MR1)
+
     private fun setUpActionBar(){
         val ab = supportActionBar // Метод supportActionBar используется для получения объекта ActionBar для текущей активности.
         Thread{
@@ -447,12 +450,16 @@ class MainActivity : AppCompatActivity(), UserAdapter.OnMessageLongClickListener
              * Затем метод get() вызывается для получения объекта Bitmap, который представляет загруженное изображение.
              * Наконец, объект Bitmap сохраняется в переменной bMap для использования в дальнейшем, например, для создания объекта BitmapDrawable для установки значка кнопки "Домой" ActionBar
              */
-            val bMap = Picasso
-                .get()
-                .load(URL_AVATAR)
-                .resize(100,130)
-                .transform(CircleTransform())
-                .get()
+            val bMap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                Picasso
+                    .get()
+                    .load(URL_AVATAR)
+                    .resize(100,130)
+                    .transform(CircleTransform())
+                    .get()
+            } else {
+                TODO("VERSION.SDK_INT < O_MR1")
+            }
 
             /**
              * Код создает новый объект BitmapDrawable, используя ресурсы приложения и объект bMap,
